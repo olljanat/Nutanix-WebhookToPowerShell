@@ -33,6 +33,8 @@ namespace WebhookToPowerShell.Controllers
             {  
                 using (var writer = System.IO.File.CreateText(logPath)) {
                     writer.Write(await reader.ReadToEndAsync());
+                    writer.Close();
+                    writer.Dispose();
                 }
             }
 
