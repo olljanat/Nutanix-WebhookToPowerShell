@@ -12,4 +12,7 @@
     <PackageReference Include="microsoft.powershell.sdk" Version="6.2.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Include="Scripts\*" CopyToPublishDirectory="Always" />
+  </ItemGroup>
 </Project>
