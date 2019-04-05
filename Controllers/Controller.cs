@@ -22,29 +22,14 @@ namespace WebhookToPowerShell.Controllers
         [HttpPost]
         public async Task<string> ReadStringDataManual()
         {   
-            var logFolder = System.IO.Path.GetTempPath() + "WebhookToPowerShell";
-            if (!Directory.Exists(logFolder)) {
-                Directory.CreateDirectory(logFolder);
-            }
-
-            var logPath = logFolder + "/" + Guid.NewGuid() + ".json";
-            System.Console.WriteLine("Saving web hook to file: " + logPath);
             using (StreamReader reader = new StreamReader(Request.Body, Encoding.UTF8))
-            {  
-                using (var writer = System.IO.File.CreateText(logPath)) {
-                    writer.Write(await reader.ReadToEndAsync());
-                    writer.Close();
-                    writer.Dispose();
-                }
-            }
-
-            using (var ps = PowerShell.Create())
             {
-                var command = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/Scripts/ProcessWebhooks.ps1";
-                ps.AddScript(command);
-                ps.Invoke();
+                var content = await reader.ReadToEndAsync();
+                PowerShell.Create().
+                        AddCommand(Path.GetDirectoryName(Assembly.GetEntryAssembly().Location) + "/Scripts/ProcessWebhooks.ps1").
+                        AddParameter("Data", content).
+                        Invoke();
             }
-
             return "";
         }
     }
