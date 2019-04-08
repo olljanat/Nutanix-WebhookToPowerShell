@@ -4,9 +4,9 @@ Proxy service which listens Nutanix [event notifications](https://portal.nutanix
 It can be used to implement realtime integrations e.g. update CMDB always when virtal machines are updated or migrated between hypervisor hosts.
 
 # How it works
-ASP.NET Code implements web server which listens POST requests coming from Nutanix Prism Elements and send those to script **WebhookToPowerShell\ProcessWebhooks.ps1**
+ASP.NET Code implements web server which listens POST requests coming from Nutanix Prism Elements and send those to script **Scripts\ProcessWebhooks.ps1**
 
-ProcessWebhooks.ps1 converts JSON payload to PowerShell objects and send that to event type specific script.
+Scripts\ProcessWebhooks.ps1 converts JSON payload to PowerShell objects and send that to event type specific script.
 Event type specific example scripts will currently only info messages to log file but those can be easily enhanced to do what ever you want.
 
 Example log:
