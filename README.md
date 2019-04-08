@@ -1,6 +1,8 @@
 # Nutanix-WebhookToPowerShell
 Proxy service which listens Nutanix [event notifications](https://portal.nutanix.com/#/page/docs/details?targetId=AHV-Admin-Guide-v51:ahv-webhooks-event-notifications-c.html) and send them to PowerShell scripts.
 
+It can be used to implement realtime integrations e.g. update CMDB always when virtal machines are updated or migrated between hypervisor hosts.
+
 # How it works
 ASP.NET Code implements web server which listens POST requests coming from Nutanix Prism Elements and send those to script **WebhookToPowerShell\ProcessWebhooks.ps1**
 
