@@ -196,12 +196,14 @@ Example content of JSON payload coming from Nutanix:
 }
 ``` 
 
-# Build
-Build Docker image
+# Usage
+## Build
+Build Docker image (pre-build image is also available which you can use for testing purposes).
 ```bash
 docker build . -t ollijanatuinen/nutanix-webhook2pwsh
 ```
 
+## Deploy
 Create Docker service
 ```bash
 mkdir /data/nutanix-webhook2pwsh
@@ -211,4 +213,77 @@ docker service create \
     --mount type=bind,source=/data/nutanix-webhook2pwsh,target=/logs \
     -p 5000:5000 \
     ollijanatuinen/nutanix-webhook2pwsh
+```
+
+Establish connection to Nutanix Prism Elements
+```powershell
+# Settings
+$NutanixPrismElementsUrl = "https://1.2.3.4:9440"
+$Username = "admin"
+$Password = "pwd"
+$Webhook2PwshUrl = "http://dockerhost:5000"
+
+#####################################################
+# Use TLS 1.2
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+# Disable certificate check
+Add-Type -TypeDefinition @"
+	using System.Net;
+	using System.Security.Cryptography.X509Certificates;
+	public class TrustAllCertsPolicy : ICertificatePolicy {
+		public bool CheckValidationResult(
+				ServicePoint srvPoint, X509Certificate certificate,
+				WebRequest request, int certificateProblem) {
+			return true;
+		}
+	}
+"@
+[System.Net.ServicePointManager]::CertificatePolicy = New-Object TrustAllCertsPolicy
+
+$AuthorizationBytes = [System.Text.Encoding]::UTF8.GetBytes($Username + ":" + $Password)
+$AuthorizationBase64 = [System.Convert]::ToBase64String($AuthorizationBytes)
+$NutanixAuthenticationHeaders = @{ Authorization = "Basic $AuthorizationBase64" }
+```
+
+Create enable webhook
+```powershell
+$Metadata = New-Object -TypeName PSObject -Property @{
+	"kind" = "webhook"
+}
+$Credentials = New-Object -TypeName PSObject -Property @{
+}
+$Resources = New-Object -TypeName PSObject -Property @{
+	"post_url" = $Webhook2PwshUrl
+	"credentials" = $Credentials
+	"events_filter_list" = @(
+		"VM.CREATE",
+		"VM.DELETE",
+		"VM.UPDATE",
+		"VM.ON",
+		"VM.OFF",
+		"VM.MIGRATE"
+	)
+}
+$Spec = New-Object -TypeName PSObject -Property @{
+	"name" = "WebhookToPowerShell"
+	"resources" = $Resources
+	"description" = "Send webhooks to PowerShell"
+}
+$Item = New-Object -TypeName PSObject -Property @{
+	"metadata" = $Metadata
+	"spec" = $Spec
+	"api_version" = "3.0"
+}
+$Body = $Item | ConvertTo-Json -Depth 3 -Compress
+$Webhook = Invoke-RestMethod -UseBasicParsing -Uri "$NutanixPrismElementsUrl/api/nutanix/v3/webhooks" -Headers $NutanixAuthenticationHeaders  -Method POST -Body $Body -ContentType "application/json"
+
+```
+
+Delete webhook
+```powershell
+$Webhooks = Invoke-RestMethod -UseBasicParsing -Uri "$NutanixPrismElementsUrl/api/nutanix/v3/webhooks/list" -Headers $NutanixAuthenticationHeaders  -Method POST -Body "{}" -ContentType "application/json"
+$Webhook = $Webhooks.entities | Where-Object {$_.spec.name -eq "WebhookToPowerShell"}
+
+Invoke-RestMethod -UseBasicParsing -Uri "$NutanixPrismElementsUrl/api/nutanix/v3/webhooks/$($Webhook.metadata.uuid)" -Headers $NutanixAuthenticationHeaders  -Method DELETE
 ```
