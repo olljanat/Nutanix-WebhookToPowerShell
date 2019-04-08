@@ -2,8 +2,7 @@ param (
     $Data
 )
 $Request = $Data | ConvertFrom-Json
-$TempFolder = [System.IO.Path]::GetTempPath()
-$LogFile = $TempFolder + "WebhookToPowershell.log"
+$LogFile = "\logs\WebhookToPowershell.log"
 
 switch ($Request.event_type) {
 	"VM.CREATE" {

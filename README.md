@@ -196,3 +196,19 @@ Example content of JSON payload coming from Nutanix:
 }
 ``` 
 
+# Build
+Build Docker image
+```bash
+docker build . -t ollijanatuinen/nutanix-webhook2pwsh
+```
+
+Create Docker service
+```bash
+mkdir /data/nutanix-webhook2pwsh
+
+docker service create \
+    --name nutanix-webhook2pwsh \
+    --mount type=bind,source=/data/nutanix-webhook2pwsh,target=/logs \
+    -p 5000:5000 \
+    ollijanatuinen/nutanix-webhook2pwsh
+```
